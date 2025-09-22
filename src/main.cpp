@@ -3,24 +3,14 @@ using namespace pros;
 
 Controller controller(E_CONTROLLER_MASTER);
 Motor left_motor(1);
-Motor right_motor(2); //true for reversed motor
-
-/**
- * A callback function for LLEMU's center button.
- *
- * When this callback is fired, it will toggle line 2 of the LCD text between
- * "I was pressed!" and nothing.
- */
-
-
+Motor right_motor(2);
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
  * All other competition modes are blocked by initialize; it is recommended
  * to keep execution time for this mode under a few seconds.
  */
-void initialize() { 
-// Motor initalization
+void initialize() {
   left_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
   right_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
 
@@ -47,7 +37,7 @@ void disabled() {}
  * This task will exit when the robot is enabled and autonomous or opcontrol
  * starts.
  */
-void competition_initialize() {}
+void competition_initialize() {} // Not really used
 
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -60,7 +50,9 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() { // Autonomous section
+
+}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -75,9 +67,8 @@ void autonomous() {}
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
-void opcontrol() {
+void opcontrol() { //Operator control section
 	while (true) {
-		// Get joystick values
 		int forward = controller.get_analog(ANALOG_LEFT_Y);    // Forward/backward movement
 		int turn = controller.get_analog(ANALOG_LEFT_X);       // Left/right turning
 		
@@ -85,11 +76,9 @@ void opcontrol() {
 		int left_speed = forward + turn;   // Left motor: forward + turn
 		int right_speed = forward - turn;  // Right motor: forward - turn
 		
-		// Set motor speeds
 		left_motor.move(left_speed);
 		right_motor.move(right_speed);
 		
-		// Small delay to prevent overloading the CPU
 		delay(20);
 	}
 }
