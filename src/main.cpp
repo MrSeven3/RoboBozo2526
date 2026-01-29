@@ -1,4 +1,5 @@
 #include "main.h"
+#include "lemlib/api.hpp" // IWYU pragma: keep
 using namespace pros;
 
 Controller controller(E_CONTROLLER_MASTER);
@@ -7,6 +8,14 @@ Motor right_motor(20);
 Motor intake_motor(1);
 Motor belt_motor(10);
 Motor pusher_motor(2);
+
+MotorGroup left_drive({11});
+MotorGroup right_drive({20});
+
+Imu imu(8);
+
+
+
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -36,9 +45,69 @@ void initialize() {
   pusher_motor.set_encoder_units(MOTOR_ENCODER_DEGREES);
 }
 
-void logo() {
+
+// ai wrote these funcs because im lazy and its simple
+void drive_forward(int speed, int time) {
+	left_motor.move(speed);
+	right_motor.move(speed);
+	delay(time);
+	left_motor.brake();
+	right_motor.brake();
+}
+
+void turn_right(int speed, int time) {
+	left_motor.move(speed);
+	right_motor.move(-speed);
+	delay(time);
+	left_motor.brake();
+	right_motor.brake();
+}
+
+void turn_left(int speed, int time) {
+	left_motor.move(-speed);
+	right_motor.move(speed);
+	delay(time);
+	left_motor.brake();
+	right_motor.brake();
+}
+
+void set_drive_forward(int speed) {
+	left_motor.move(speed);
+	right_motor.move(speed);
+}
+void set_drive_right(int speed) {
+	left_motor.move(speed);
+	right_motor.move(-speed);
+}
+void set_drive_left(int speed) {
+	left_motor.move(-speed);
+	right_motor.move(speed);
+}
+
+void activate_intake(int speed) {
+	intake_motor.move(speed);
+}
+void activate_belt(int speed) {
+	belt_motor.move(speed);
+}
+
+void test_auton() {
+	drive_forward(70, 1000);
+	delay(500);
+	drive_forward(-70, 1000);
+	delay(500);
+	turn_right(70, 500);
+	delay(500);
+	turn_left(70, 500);
+	delay(500);
+	activate_intake(127);
+	activate_belt(90);
+	delay(2000);
+	activate_intake(0);
+	activate_belt(0);
 
 }
+
 
 /**
  * Runs while the robot is in the disabled state of Field Management System or
@@ -61,7 +130,7 @@ void competition_initialize() {} // Not really used
 
 
 /**
- * Runs the user autonomous code. This function will be started in its own task
+ * Runs the user autonomous code. TAhis function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
  * the Field Management System or the VEX Competition Switch in the autonomous
  * mode. Alternatively, this function may be called in initialize or opcontrol
@@ -72,7 +141,7 @@ void competition_initialize() {} // Not really used
  * from where it left off.
  */
 void autonomous() { // Autonomous section
-
+	test_auton();
 }
 
 /**
@@ -98,11 +167,13 @@ void opcontrol() { //Operator control section
 	// intake r1
 	// belt r2
 	// inverse for reverse modes	
-
+		
+		// drive direction toggle
 		if (controller.get_digital(E_CONTROLLER_DIGITAL_A)) {
 			drive_mult = -drive_mult;
 		}
-
+		
+		// intake control
 		if (controller.get_digital(E_CONTROLLER_DIGITAL_R1)) {
 			intake_motor.move(127); //make intake intake
 		} else if (controller.get_digital(E_CONTROLLER_DIGITAL_L1))
@@ -112,6 +183,7 @@ void opcontrol() { //Operator control section
 			intake_motor.move(0); // stop intake
 		}
 
+		// belt control
 		if (controller.get_digital(E_CONTROLLER_DIGITAL_R2)) {
 			belt_motor.move(90); // make belt run up
 		} else if (controller.get_digital(E_CONTROLLER_DIGITAL_L2)){
