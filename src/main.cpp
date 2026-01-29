@@ -2,8 +2,11 @@
 using namespace pros;
 
 Controller controller(E_CONTROLLER_MASTER);
-Motor left_motor(1);
-Motor right_motor(2);
+Motor left_motor(11);
+Motor right_motor(20);
+Motor intake_motor(1);
+Motor belt_motor(10);
+Motor pusher_motor(2);
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -11,7 +14,7 @@ Motor right_motor(2);
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-  left_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
+  left_motor.set_brake_mode(MOTOR_BRAKE_HOLD); 
   right_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
 
   left_motor.set_gearing(MOTOR_GEARSET_18);
@@ -19,6 +22,22 @@ void initialize() {
 
   left_motor.set_reversed(false);
   right_motor.set_reversed(true);
+
+  intake_motor.set_brake_mode(MOTOR_BRAKE_BRAKE);
+  intake_motor.set_gearing(MOTOR_GEARSET_18);
+
+  belt_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
+  belt_motor.set_gearing(MOTOR_GEARSET_18);
+
+  intake_motor.set_reversed(true);
+  belt_motor.set_reversed(true);
+
+  pusher_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
+  pusher_motor.set_encoder_units(MOTOR_ENCODER_DEGREES);
+}
+
+void logo() {
+
 }
 
 /**
@@ -38,6 +57,8 @@ void disabled() {}
  * starts.
  */
 void competition_initialize() {} // Not really used
+
+
 
 /**
  * Runs the user autonomous code. This function will be started in its own task
@@ -68,16 +89,54 @@ void autonomous() { // Autonomous section
  * task, not resume it from where it left off.
  */
 void opcontrol() { //Operator control section
+	double drive_mult = 0.7;
+	bool pusher_extended = false;
 	while (true) {
 		int forward = controller.get_analog(ANALOG_LEFT_Y);    // Forward/backward movement
 		int turn = controller.get_analog(ANALOG_LEFT_X);       // Left/right turning
 		
+	// intake r1
+	// belt r2
+	// inverse for reverse modes	
+
+		if (controller.get_digital(E_CONTROLLER_DIGITAL_A)) {
+			drive_mult = -drive_mult;
+		}
+
+		if (controller.get_digital(E_CONTROLLER_DIGITAL_R1)) {
+			intake_motor.move(127); //make intake intake
+		} else if (controller.get_digital(E_CONTROLLER_DIGITAL_L1))
+		{
+			intake_motor.move(-127); //run intake in reverse
+		} else {
+			intake_motor.move(0); // stop intake
+		}
+
+		if (controller.get_digital(E_CONTROLLER_DIGITAL_R2)) {
+			belt_motor.move(90); // make belt run up
+		} else if (controller.get_digital(E_CONTROLLER_DIGITAL_L2)){
+			belt_motor.move(-127); //make belt run down
+		} else {
+			belt_motor.move(0); // stop belt
+		}
+
+		if (controller.get_digital(E_CONTROLLER_DIGITAL_B)) {
+			if (!pusher_extended) {
+				pusher_motor.move_relative(145,100);
+				pusher_extended = true;
+			} else {
+				pusher_motor.move_relative(-145,100);
+				pusher_extended = false;
+			}
+			delay(20); //debounce delay
+		}
+
 		// Calculate motor speeds for tank drive
 		int left_speed = forward + turn;   // Left motor: forward + turn
 		int right_speed = forward - turn;  // Right motor: forward - turn
 		
-		left_motor.move(left_speed);
-		right_motor.move(right_speed);
+		left_motor.move(left_speed*drive_mult);
+		right_motor.move(right_speed*drive_mult);
 		
 		delay(20);
 	}
