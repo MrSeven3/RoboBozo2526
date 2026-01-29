@@ -12,7 +12,54 @@ Motor pusher_motor(2);
 MotorGroup left_drive({11});
 MotorGroup right_drive({20});
 
-Imu imu(8);
+Imu imu(9);
+
+lemlib::Drivetrain drivetrain(
+    &left_drive, &right_drive,
+    13.5,  // track width (measure center-to-center of wheels in inches)
+    3.2,  // wheel diameter in inches (measure your wheels!)
+    200,   // RPM - depends on your motor cartridge:
+           // 600 (blue/36:1), 200 (green/18:1), 100 (red/36:1)
+    2      // chase power
+);
+
+lemlib::OdomSensors sensors(
+    nullptr, nullptr, nullptr, nullptr,
+    &imu
+);
+
+// lateral PID controller
+lemlib::ControllerSettings lateral_controller(10, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              3, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in inches
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in inches
+                                              500, // large error range timeout, in milliseconds
+                                              20 // maximum acceleration (slew)
+);
+
+// angular PID controller
+lemlib::ControllerSettings angular_controller(2, // proportional gain (kP)
+                                              0, // integral gain (kI)
+                                              10, // derivative gain (kD)
+                                              3, // anti windup
+                                              1, // small error range, in degrees
+                                              100, // small error range timeout, in milliseconds
+                                              3, // large error range, in degrees
+                                              500, // large error range timeout, in milliseconds
+                                              0 // maximum acceleration (slew)
+);
+
+lemlib::Chassis chassis(drivetrain, // drivetrain settings
+                        lateral_controller, // lateral PID settings
+                        angular_controller, // angular PID settings
+                        sensors // odometry sensors
+);
+//13.5 track
+//12.5 wheelbase
+//4 inch wheels
 
 
 
@@ -23,6 +70,8 @@ Imu imu(8);
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
+
+
   left_motor.set_brake_mode(MOTOR_BRAKE_HOLD); 
   right_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
 
@@ -43,6 +92,8 @@ void initialize() {
 
   pusher_motor.set_brake_mode(MOTOR_BRAKE_HOLD);
   pusher_motor.set_encoder_units(MOTOR_ENCODER_DEGREES);
+
+  chassis.calibrate();
 }
 
 
